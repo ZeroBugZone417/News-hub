@@ -1,0 +1,95 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEW News Frontend</title>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#f1f5f9;color:#0f172a}
+header{background:#0ea5e9;color:#fff;padding:16px;text-align:center}
+.controls{padding:12px;text-align:center}
+select,input,button{padding:8px;margin:4px;border-radius:8px;border:1px solid #ccc}
+button{background:#0ea5e9;color:#fff;border:none;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:16px}
+.card{background:#fff;border-radius:12px;padding:12px;box-shadow:0 4px 10px rgba(0,0,0,.1)}
+.card h3{margin:0 0 6px;font-size:16px}
+.card a{color:#0ea5e9;text-decoration:none;font-weight:bold}
+.status{text-align:center;padding:8px;color:#555}
+</style>
+</head>
+<body>
+
+
+<header>
+<h1>📰 DEW News Frontend</h1>
+</header>
+
+
+<div class="controls">
+<select id="source">
+<option value="derana">Derana</option>
+<option value="hiru">Hiru</option>
+<option value="sirasa">Sirasa</option>
+<option value="lankadeepa">Lankadeepa</option>
+<option value="bbc">BBC</option>
+<option value="itn">ITN</option>
+<option value="siyatha">Siyatha</option>
+</select>
+<input id="search" placeholder="Search news...">
+<button onclick="loadNews()">Load</button>
+</div>
+
+
+<div class="status" id="status"></div>
+<div class="grid" id="news"></div>
+
+
+<script>
+let cache=[];
+const BACKEND_URL=''; // leave empty to call same domain (backend + frontend hosted together)
+
+
+async function loadNews(){
+const source=document.getElementById('source').value;
+const status=document.getElementById('status');
+const grid=document.getElementById('news');
+const q=document.getElementById('search').value.toLowerCase();
+
+
+status.textContent='Loading...';
+grid.innerHTML='';
+
+
+try{
+const res=await fetch(`${BACKEND_URL}/api/news/${source}`);
+if(!res.ok)throw new Error('HTTP '+res.status);
+const data=await res.json();
+cache=data.result||data.data||[];
+render(q);
+status.textContent='';
+}catch(e){
+status.textContent='Backend not reachable / error';
+console.error(e);
+}
+}
+
+
+function render(query){
+const grid=document.getElementById('news');
+let list=cache;
+if(query)list=list.filter(n=>(n.title||'').toLowerCase().includes(query));
+if(!list.length){grid.innerHTML='<div class="status">No results</div>';return;}
+grid.innerHTML=list.map(n=>`<div class="card"><h3>${n.title||'No title'}</h3><a href="${n.link}" target="_blank">Read →</a></div>`).join('');
+}
+
+
+document.addEventListener('DOMContentLoaded',()=>{
+document.getElementById('search').addEventListener('input',e=>render(e.target.value.toLowerCase()));
+loadNews();
+});
+</script>
+
+
+</body>
+</html>
